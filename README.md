@@ -16,6 +16,7 @@
 6. [Implementation Comparison](#implementation-comparison)
 7. [Known Extensions](#known-extensions)
 8. [Resources](#resources)
+9. [Conclusion: Is a Universal TCI Implementation Possible?](#conclusion-is-a-universal-tci-implementation-possible)
 
 ---
 
@@ -471,6 +472,95 @@ Thetis maps radio functions not available in standard TCI to Kenwood ZZ CAT comm
 | station-engine (Zeus-SDR) | https://github.com/Zeus-SDR/station-engine |
 | ExpertSDR2 (closed source) | https://eesdr.com/ |
 | WDSP DSP library | https://github.com/TAPR/OpenHPSDR-wdsp |
+
+---
+
+## Conclusion: Is a Universal TCI Implementation Possible?
+
+### Short answer: Yes — with five concrete adaptations
+
+A universal TCI client that works across all known server implementations is achievable. The core protocol is surprisingly consistent. The deviations are small in number but sharp in detail.
+
+### What we analysed
+
+Ten implementations were analysed through direct source code (deskHPSDR `tci.c` at 6 200 lines, Zeus `TciSession.cs` at 2 100 lines) and the NereusSDR verification matrix which cites Thetis line-by-line. The central question was: **where do the real deviations live?**
+
+The surprising outcome: most commands — `vfo`, `rx_filter_band`, `split_enable`, `rit_offset`, `sql_level`, `rx_nb_enable`, `rx_nr_enable`, `rx_anf_enable` — work identically across all implementations. The deviations are concentrated in five areas.
+
+### The five real deviations
+
+**1. `audio_start` — argument count**
+
+The ExpertSDR3 reference spec expects two arguments: `audio_start:trx,ch;`. Every other implementation expects one: `audio_start:rx;`. deskHPSDR actively rejects two arguments. This is the most direct breakage point for a universal client.
+
+*Fix:* always send one argument. ExpertSDR3 is the only outlier and it is closed-source; the open-source community has already converged on one argument.
+
+**2. `trx` — broadcast or not**
+
+deskHPSDR and Zeus broadcast PTT state changes to all connected clients. Thetis and NereusSDR send the response **only** back to the requesting client. In a multi-client scenario (WSJT-X + logging software simultaneously) one client will be blind to the other's PTT state if it relies on broadcast.
+
+*Fix:* actively query PTT state with `trx:0;` when in doubt, rather than relying on broadcast.
+
+**3. Modulation names — CW and FM**
+
+deskHPSDR sends `CW` for both CWL and CWU, and `FM` instead of `NFM`. All others send `CWL`/`CWU` and `NFM` (or accept both). Zeus sends `FM` but accepts `NFM` as an alias.
+
+*Fix:* when receiving, accept `CW`, `CWL`, `CWU`, `FM` and `NFM` as all valid. When sending, use `CWU` — every implementation understands it.
+
+**4. `agc_mode` — command name and values**
+
+ExpertSDR3 uses the command `agc_auto_ex:rx,ch,bool;`. All open-source implementations (deskHPSDR, Thetis, NereusSDR, Zeus) use `agc_mode:rx,mode;` with named values. But the values differ too:
+
+| Implementation | AGC mode values |
+|---|---|
+| deskHPSDR | `off`, `fast`, `normal` |
+| Zeus | `FIXED`, `SLOW`, `MEDIUM`, `FAST`, `CUSTOM` |
+| Thetis / NereusSDR | `off`, `fast`, `normal`, `med` (med = normal) |
+
+*Fix:* use `agc_mode` with `fast` / `normal` / `off` — understood everywhere.
+
+**5. IQ streaming — ownership model**
+
+The most architectural deviation. deskHPSDR implements an *exclusive* ownership model: the first client to send `iq_start` owns the stream and sets the sample rate for everyone. If that client sends `iq_stop`, all IQ streams for all clients are stopped. Thetis and NereusSDR have not implemented this (it is a stub). Zeus uses a per-session subscription model without exclusivity.
+
+*Fix:* with deskHPSDR, negotiate the sample rate before sending `iq_start`, and be careful with `iq_stop`.
+
+### Writing a universal client
+
+A universal TCI client that works across all tested implementations follows these rules:
+
+```
+audio_start:0;              # 1 arg only — not 2
+audio_samplerate:48000;     # harmless on deskHPSDR; required for Thetis/NereusSDR
+iq_samplerate:192000;       # set BEFORE iq_start; deskHPSDR locks this rate exclusively
+iq_start:0;
+
+trx:0,true;                 # PTT on
+trx:0,true,tci;             # PTT on + TX audio via WebSocket (deskHPSDR + Zeus)
+
+modulation:0,CWU;           # send CWU — deskHPSDR accepts it, echoes CW back
+                             # on receive: treat CW/CWL/CWU as equivalent
+
+agc_mode:0,fast;            # works in all implementations
+```
+
+Detect the server via the init block and apply per-server adaptations:
+
+```
+protocol:ExpertSDR3,2.0; + device:Zeus;      → Zeus (full TCI; CWL/CWU correct; no PTT compat needed)
+protocol:ExpertSDR3,1.7;                      → ExpertSDR3 (use 2-arg audio_start)
+device:deskHPSDR;                             → deskHPSDR (CW alias; IQ exclusive ownership)
+device:Thetis;                                → Thetis (audio/IQ stub; no PTT broadcast)
+device:NereusSDR;                             → NereusSDR (SETUP: compat flags available)
+```
+
+With device detection, the five deviations can be handled in a small abstraction layer — roughly 200 lines of code.
+
+### Final verdict
+
+A universal TCI implementation is achievable. The deviations are few and well-defined. The greatest risk is not syntax but behavioural: the deskHPSDR IQ ownership model and the missing PTT broadcast in Thetis/NereusSDR can cause silent failures that only surface when multiple clients connect simultaneously.
+
+The open-source community has already informally converged away from the reference spec on `audio_start` — all active implementations use 1 argument. The ExpertSDR3 reference is trailing practice on that point.
 
 ---
 
