@@ -279,34 +279,36 @@ Offset  Size  Field
 
 The table below compares TCI behavior across known implementations. "✓" = confirmed, "✗" = not supported, "?" = unknown/not verified.
 
-| Feature | [ExpertSDR](https://eesdr.com/) | [Thetis (ramdor)](https://github.com/ramdor/Thetis) | [Thetis (mi0bot)](https://github.com/mi0bot/OpenHPSDR-Thetis) | [deskHPSDR](https://github.com/dl1bz/deskhpsdr) | [Lyra-SDR-cpp](https://github.com/N8SDR1/Lyra-SDR-cpp) | [SDROxide](https://github.com/dividebysandwich/sdroxide) |
-|---|---|---|---|---|---|---|
-| **Role** | Server | Server | Server | Server | Server | Client + Server |
-| **Hardware** | SunSDR2 / Expert | ANAN (OpenHPSDR) | Hermes Lite 2 | ANAN / HL2 (P1/P2) | HL2, BrickSDR2 | Many (SoapySDR etc.) |
-| **Language** | Closed source | C# / .NET 4.8 | C# / .NET | C | C++23 / Qt6 | Rust |
-| **OS** | Windows | Windows | Windows | macOS / Linux / Win | Win (Linux planned) | Linux / macOS / Win |
-| **Protocol version** | 2 | 2 (emulated) | 2 (emulated) | 2 | 1.9 / 2 | 2 (as client) |
-| **`device:` value** | `ExpertSDR2` / `ExpertSDR3` | `ExpertSDR2` | `ExpertSDR2` | ? | ? | ? |
-| **`receive_only`** | ✓ | ✓ | ✓ | ? | ? | ? |
-| **`trx_count` > 1** | ✓ | ✓ | ? | ✓ | ? | ? |
-| **`channels_count`** | ✓ | ✓ | ? | ✓ | ? | ? |
-| **`tx_profiles_ex`** | ✓ | ✓ | ? | ? | ? | ? |
-| **IQ streaming** | ✓ 192kHz | ✓ | ✓ | ✓ 48/96/192/384kHz | ✓ | ✓ |
-| **RX audio streaming** | ✓ 48kHz | ✓ | ✓ | ✓ | ✓ (optional) | ✓ |
-| **TX audio streaming** | ✓ | ✓ | ✓ | ✓ | ? | ? |
-| **Spectrum / FFT** | ✓ (proprietary ext.) | ? | ? | ? | ? | ? |
-| **`split_enable`** | Standard | Numeric = query† | ? | ? | ? | ? |
-| **`rx_antenna`** | ✓ | Via CAT (ZZOA/ZZOC) | ? | ? | ? | ? |
-| **`tx_antenna`** | ✓ | Via CAT (ZZOA/ZZOC) | ? | ? | ? | ? |
-| **`run_cat_ex`** | ✓ | ✓ (ZZ dialect) | ✓ | ? | ? | Partial |
-| **ZZ CAT commands** | ✗ | ✓ (ZZSO, ZZOA, ZZOC …) | ✓ | ✗ | ✗ | ✗ |
-| **`rx_nb_enable_ex`** | ✓ | ? | ? | ✓ (NB1/NB2) | ? | ? |
-| **`rx_nr_enable_ex`** | NR 0–4 | ? | ? | NR1–NR4 + NNR | ? | 5 NR engines |
-| **`keepalive`** | ✓ | ✓ | ✓ | ? | ? | ? |
-| **`start` / `stop`** | ✓ | ✓ (radio power) | ✓ | ? | ? | ? |
-| **Multi-client** | ✓ | ✓ | ✓ | ? | ? | ✓ |
-| **WSS (TLS)** | ? | Planned | ? | ? | ? | ? |
-| **State echo to all** | ✓ | ✓ | ✓ | ? | ? | ? |
+| Feature | [ExpertSDR](https://eesdr.com/) | [Thetis (ramdor)](https://github.com/ramdor/Thetis) | [Thetis (mi0bot)](https://github.com/mi0bot/OpenHPSDR-Thetis) | [deskHPSDR](https://github.com/dl1bz/deskhpsdr) | [Lyra-SDR-cpp](https://github.com/N8SDR1/Lyra-SDR-cpp) | [SDROxide](https://github.com/dividebysandwich/sdroxide) | [NereusSDR](https://github.com/boydsoftprez/NereusSDR) | [Kainos](https://github.com/PNWHam-K7JUS/Kainos) | [Bolt SDR](https://github.com/pe5jw/bolt-sdr) | [Rigflow](https://github.com/dbourgoyne/rigflow) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **Role** | Server | Server | Server | Server | Server | Client + Server | Server | Server | Server | Server (TCI client for digi modes) |
+| **Hardware** | SunSDR2 / Expert | ANAN (OpenHPSDR) | Hermes Lite 2 | ANAN / HL2 (P1/P2) | HL2, BrickSDR2 | Many (SoapySDR etc.) | ANAN, HL2 (P1/P2) | Hermes Lite 2 | Hermes Lite 2 | Hermes Lite 2, RTL-SDR |
+| **Language** | Closed source | C# / .NET 4.8 | C# / .NET | C | C++23 / Qt6 | Rust | C++20 / Qt6 | C# / .NET | C# / .NET + Python | Rust |
+| **OS** | Windows | Windows | Windows | macOS / Linux / Win | Win (Linux planned) | Linux / macOS / Win | macOS / Linux / Win | Windows | Linux / macOS / Win | Linux / macOS |
+| **Protocol version** | 2 | 2 (emulated) | 2 (emulated) | 2 | 1.9 / 2 | 2 (as client) | 2 (Thetis-faithful) | 2 (Thetis-faithful) | ? | ? (client only, experimental) |
+| **`device:` value** | `ExpertSDR2` / `ExpertSDR3` | `ExpertSDR2` | `ExpertSDR2` | ? | ? | ? | ? | `Thetis` (intentional) | ? | N/A |
+| **`receive_only`** | ✓ | ✓ | ✓ | ? | ? | ? | ✓ | ✓ | ? | N/A |
+| **`trx_count` > 1** | ✓ | ✓ | ? | ✓ | ? | ? | ✓ (as slices A/B/C/D) | ✓ | ? | N/A |
+| **`channels_count`** | ✓ | ✓ | ? | ✓ | ? | ? | ✓ | ✓ | ? | N/A |
+| **`tx_profiles_ex`** | ✓ | ✓ | ? | ? | ? | ? | ? | ? | ? | N/A |
+| **IQ streaming** | ✓ 192kHz | ✓ | ✓ | ✓ 48/96/192/384kHz | ✓ | ✓ | ✓ (IQSwap + AlwaysStreamIQ) | ✓ | ? | N/A |
+| **RX audio streaming** | ✓ 48kHz | ✓ | ✓ | ✓ | ✓ (optional) | ✓ | ✓ (8/12/16/44.1/48kHz via WDSP) | ✓ | ? | N/A |
+| **TX audio streaming** | ✓ | ✓ | ✓ | ✓ | ? | ? | ✓ (single-client mutex + ring buffer) | ✓ | ? | N/A |
+| **Spectrum / FFT** | ✓ (proprietary ext.) | ? | ? | ? | ? | ? | ✓ (3-priority queue) | ? | ? | N/A |
+| **`split_enable`** | Standard | Numeric = query† | ? | ? | ? | ? | Standard | Standard† | ? | N/A |
+| **`rx_antenna`** | ✓ | Via CAT (ZZOA/ZZOC) | ? | ? | ? | ? | ? | Via CAT (ZZOA/ZZOC) | ? | N/A |
+| **`tx_antenna`** | ✓ | Via CAT (ZZOA/ZZOC) | ? | ? | ? | ? | ? | Via CAT (ZZOA/ZZOC) | ? | N/A |
+| **`run_cat_ex`** | ✓ | ✓ (ZZ dialect) | ✓ | ? | ? | Partial | ? | ✓ (ZZ dialect) | ? | N/A |
+| **ZZ CAT commands** | ✗ | ✓ (ZZSO, ZZOA, ZZOC …) | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ (inherited from Thetis) | ✗ | N/A |
+| **`rx_nb_enable_ex`** | ✓ | ? | ? | ✓ (NB1/NB2) | ? | ? | ✓ (WDSP) | ? | ? | N/A |
+| **`rx_nr_enable_ex`** | NR 0–4 | ? | ? | NR1–NR4 + NNR | ? | 5 NR engines | ✓ (WDSP) | ? | ? | N/A |
+| **`keepalive`** | ✓ | ✓ | ✓ | ? | ? | ? | ✓ | ✓ | ? | N/A |
+| **`start` / `stop`** | ✓ | ✓ (radio power) | ✓ | ? | ? | ? | ✓ | ✓ | ? | N/A |
+| **Multi-client** | ✓ | ✓ | ✓ | ? | ? | ✓ | ✓ (broadcast to all) | ✓ | ? | N/A |
+| **WSS (TLS)** | ? | Planned | ? | ? | ? | ? | ? | ? | ? | N/A |
+| **State echo to all** | ✓ | ✓ | ✓ | ? | ? | ? | ✓ | ✓ | ? | N/A |
+| **Default TCI port** | 50001 | 50001 | 50001 | ? | ? | ? | ? | 50001 | 40001 | 40001 |
+| **TCI dispatch cmds** | ~all | many | many | ? | ? | ? | 62 (8 families) | many (Thetis-compat) | `trx` confirmed | ? |
 
 †) In some Thetis versions, `split_enable:0;` (numeric 0 instead of boolean) is used to query the current state.
 
@@ -345,6 +347,79 @@ The table below compares TCI behavior across known implementations. "✓" = conf
 - Multi-backend: SoapySDR, HPSDR, and others
 - Partial CAT pass-through support when acting as client
 
+#### NereusSDR (boydsoftprez)
+
+- C++20/Qt6 port of Thetis; GPL-3.0; macOS, Linux, Windows
+- TCI v2.0 server shipped in **v0.5.0** (2026-05-13) as Phase 3J-1
+- **62 dispatch commands** across 8 families, with an init burst of ~98 wire frames matching Thetis
+- Documented deviations from Thetis:
+  1. Init-burst typo fix (one corrected field)
+  2. Uses Qt6 `QWebSocketServer` instead of hand-rolled RFC 6455 framing
+  3. Slices shown as A/B/C/D in UI but appear as `trx:N` on the wire
+  4. UTF-8 enforced outbound
+  5. Single-class `ClientChainApplet`
+  6. Sensor-interval aggregation
+  7. Broadcast to all connected clients
+  8. Bind-interface dropdown (configurable network interface)
+  9. DIGU/DIGL F5 default restoration
+- RX audio resampled via WDSP at 8, 12, 16, 44.1, 48 kHz (multi-rate support)
+- TX audio gated by single-client mutex with ring buffer
+- Three-priority send queue: status → sensor → spectrum
+- Layer-3 VFO coalescer for wheel-acceleration handling
+- ~80-row verification matrix (`tests/data/tci/matrix.csv`)
+- `nereusd` headless Core for remote operation; iPhone/iPad client available
+
+#### Kainos (PNWHam-K7JUS)
+
+- Windows-only fork of Thetis (and Thetis HL2 edition), targets Hermes Lite 2
+- Current version 1.0.3 based on Thetis 2.10.3.15; builds with Visual Studio 2026
+- Intentionally identifies as `Thetis` to TCI and TCP CAT clients for compatibility
+- Inherits all Thetis TCI behaviour including ZZ CAT pass-through
+- Adds dark UI, SmartSDR-style slice flags, built-in RTTY/CW tools, DX cluster, POTA spots, KiwiSDR list
+- FreeDV RADE support via CMake-built RADE libraries
+- Settings stored separately from Thetis; one-time import from existing Thetis install
+
+#### Bolt SDR (pe5jw)
+
+- Browser-based SDR frontend for Hermes Lite 2, built on top of station-engine (Zeus fork)
+- C#/.NET backend + React web frontend; Python `tci-bridge` helper app
+- TCI server on **port 40001** (non-standard); also exposes CAT TCP on port 19090
+- Confirmed TCI command: `trx` (PTT via tci-bridge)
+- Full command set not documented; protocol version not stated
+- Also supports OpenHPSDR Protocol 1 and 2
+
+#### Rigflow (dbourgoyne)
+
+- Written in Rust; server runs on Linux/Raspberry Pi, client on Linux/macOS
+- Server owns hardware and DSP; communicates with client via WebSocket + UDP media
+- **TCI is used as a client interface only** — for digital modes (FT8/WSJT-X):
+  - Linux: virtual audio (PipeWire/Pulse) or TCI
+  - macOS: TCI only (labelled experimental)
+- TCI server runs at `ws://127.0.0.1:40001`; started automatically when client is running
+- Supported hardware: Hermes Lite 2 (primary), RTL-SDR (RX-only), Hardrock-50 amplifier
+
+#### OpenHPSDR Zeus (brianbruff) — Archived
+
+- Browser-based SDR console (.NET 10 backend, React/WebGL frontend)
+- **No TCI implementation** — archived on 2026-07-17, code kept for reference only
+- Exposes own "Station Protocol v1" over HTTP/WebSocket; not TCI
+- Hardware: Hermes Lite 2 (P1), ANAN G2/G2 MkII (P2), ANAN-100D/Angelia (P2)
+
+#### AnanCore (ChasingCoffee)
+
+- Browser-based SDR console forked from OpenHPSDR Zeus; targets ANAN G2 Ultra on Raspberry Pi 5
+- **No confirmed TCI implementation** — not mentioned in README
+- Self-hosted single-file relay for remote operation
+- Hermes Lite 2 and older ANAN boards "generally keep working"
+
+#### station-engine (Zeus-SDR)
+
+- Headless .NET 10 OpenHPSDR station process (C#); radio transport, DSP, TX control, local audio
+- **No TCI** — exposes own proprietary "Station Protocol v1" over HTTP/WebSocket on loopback (`127.0.0.1`)
+- Designed to be used with a separate proprietary Zeus SDR client
+- Runs on macOS, Windows, Linux (including ARM64 / Raspberry Pi)
+- Hardware: OpenHPSDR P1 and P2
+
 ---
 
 ## Known Extensions
@@ -381,6 +456,13 @@ Thetis maps radio functions not available in standard TCI to Kenwood ZZ CAT comm
 | deskHPSDR (dl1bz) | https://github.com/dl1bz/deskhpsdr |
 | Lyra-SDR-cpp (N8SDR1) | https://github.com/N8SDR1/Lyra-SDR-cpp |
 | SDROxide (dividebysandwich) | https://github.com/dividebysandwich/sdroxide |
+| NereusSDR (boydsoftprez) | https://github.com/boydsoftprez/NereusSDR |
+| Kainos (PNWHam-K7JUS) | https://github.com/PNWHam-K7JUS/Kainos |
+| Bolt SDR (pe5jw) | https://github.com/pe5jw/bolt-sdr |
+| Rigflow (dbourgoyne) | https://github.com/dbourgoyne/rigflow |
+| OpenHPSDR Zeus (brianbruff) — archived | https://github.com/brianbruff/openhpsdr-zeus |
+| AnanCore (ChasingCoffee) | https://github.com/ChasingCoffee/AnanCore |
+| station-engine (Zeus-SDR) | https://github.com/Zeus-SDR/station-engine |
 | ExpertSDR2 (closed source) | https://eesdr.com/ |
 | WDSP DSP library | https://github.com/TAPR/OpenHPSDR-wdsp |
 
