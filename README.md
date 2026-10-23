@@ -401,21 +401,27 @@ The table below compares TCI behavior across known implementations. "✓" = conf
 #### OpenHPSDR Zeus (brianbruff) — Archived
 
 - Browser-based SDR console (.NET 10 backend, React/WebGL frontend)
-- **No TCI implementation** — archived on 2026-07-17, code kept for reference only
-- Exposes own "Station Protocol v1" over HTTP/WebSocket; not TCI
+- **Full TCI server implemented** (`Zeus.Server.Hosting/Tci/`, ~2100 lines C#) — earlier analysis was incorrect
+- TCI protocol version `ExpertSDR3 2.0`; device name `"Zeus"`
+- Handles: `trx`, `vfo`, `modulation`, `agc_mode`, `iq_start/stop`, `audio_start/stop`, `rx_filter_band`, `split_enable`, `rx_nr_enable`, `rx_nb_enable`, `rx_anf_enable`, `cw_macros`, TX audio injection via `tci` source arg, spot commands, and more
+- Modulation: sends `CWL`/`CWU` correctly (NOT collapsed to `CW`); sends `FM` (accepts `NFM` alias); case-insensitive input, uppercase output
+- AGC: uses `agc_mode` with `FIXED/LONG/SLOW/MEDIUM/FAST/CUSTOM`; accepts `OFF`→`FIXED`, `NORMAL`/`MED`→`MEDIUM`
+- `iq_start`/`audio_start`: per-session subscription model (not exclusive ownership); supports 2-arg `iq_start:rx,bool;` form
+- `trx`: supports 3-arg `trx:rx,bool,signal_source;` where `signal_source ∈ {tci, mic1, mic2, micPC, ecoder2}`
+- Archived on 2026-07-17; code preserved; forks (AnanCore, station-engine, Bolt SDR) continue development
 - Hardware: Hermes Lite 2 (P1), ANAN G2/G2 MkII (P2), ANAN-100D/Angelia (P2)
 
 #### AnanCore (ChasingCoffee)
 
 - Browser-based SDR console forked from OpenHPSDR Zeus; targets ANAN G2 Ultra on Raspberry Pi 5
-- **No confirmed TCI implementation** — not mentioned in README
+- Inherits Zeus TCI server; TCI support **likely present** (Zeus fork); not independently verified
 - Self-hosted single-file relay for remote operation
-- Hermes Lite 2 and older ANAN boards "generally keep working"
+- Hardware: ANAN G2 Ultra (primary), Hermes Lite 2 and older ANAN boards
 
 #### station-engine (Zeus-SDR)
 
-- Headless .NET 10 OpenHPSDR station process (C#); radio transport, DSP, TX control, local audio
-- **No TCI** — exposes own proprietary "Station Protocol v1" over HTTP/WebSocket on loopback (`127.0.0.1`)
+- Headless .NET 10 OpenHPSDR station process (C#); forked from Zeus; radio transport, DSP, TX control
+- Inherits Zeus TCI server; TCI support **likely present** (Zeus fork); not independently verified
 - Designed to be used with a separate proprietary Zeus SDR client
 - Runs on macOS, Windows, Linux (including ARM64 / Raspberry Pi)
 - Hardware: OpenHPSDR P1 and P2

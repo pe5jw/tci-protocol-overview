@@ -8,12 +8,14 @@ Implementations covered:
 - **Thetis** (ramdor / mi0bot) — C# for ANAN hardware (OpenHPSDR)
 - **NereusSDR** (boydsoftprez) — C++ SDR software
 - **Lyra-SDR-cpp** (N8SDR1) — C++ SDR, WDSP-based
-- **Bolt SDR** (pe5jw) — based on OpenHPSDR Zeus; **no TCI server** (same as Zeus)
+- **OpenHPSDR Zeus** (brianbruff) — .NET 10, full TCI server, archived 2026-07-17
+- **AnanCore** (ChasingCoffee) — Zeus fork; TCI likely inherited
+- **station-engine** (Zeus-SDR) — Zeus fork; TCI likely inherited
+- **Bolt SDR** (pe5jw) — Zeus-derived; TCI likely inherited
 - **Rigflow** (dbourgoyne) — TCI *client* only (digital mode bridge)
 - **Kainos** (PNWHam-K7JUS) — skeleton/early stage, TCI not confirmed
-- **OpenHPSDR Zeus / AnanCore / station-engine** — Zeus forks; **no TCI server**
 
-> **Note on OpenHPSDR Zeus forks:** OpenHPSDR Zeus, AnanCore (ChasingCoffee), station-engine (Zeus-SDR) and Bolt SDR are all forks of the same OpenHPSDR Zeus codebase. None of them implement a TCI *server*. They control hardware via the OpenHPSDR P1/P2 protocol, not TCI. If they expose TCI at all, it would only be as a client. This family is excluded from the command-level comparison below.
+> **Note on OpenHPSDR Zeus forks:** Zeus has a complete TCI server implementation (~2100 lines C#). AnanCore, station-engine, and Bolt SDR are all forks of Zeus and likely inherit its TCI server. Earlier analysis incorrectly stated these had no TCI — that was wrong. Zeus uses protocol name `"ExpertSDR3"` version `"2.0"` in its handshake.
 
 ---
 
@@ -23,12 +25,12 @@ Audio streaming delivers decoded RX audio (float32 stereo PCM) to a client over 
 
 ### Command Syntax
 
-| Operation | ExpertSDR3 (reference) | deskHPSDR | Thetis | NereusSDR |
-|---|---|---|---|---|
-| Start RX audio | `audio_start:trx,ch;` | `audio_start:rx;` | `audio_start:rx;` (stub) | `audio_start:rx;` (stub) |
-| Stop RX audio | `audio_stop:trx,ch;` | `audio_stop:rx;` | `audio_stop:rx;` (stub) | `audio_stop:rx;` (stub) |
-| Sample rate query | `audio_samplerate;` | `audio_samplerate;` | `audio_samplerate;` | `audio_samplerate;` |
-| Set sample rate | `audio_samplerate:48000;` | `audio_samplerate:48000;` | `audio_samplerate:48000;` | `audio_samplerate:48000;` |
+| Operation | ExpertSDR3 (reference) | deskHPSDR | Thetis | NereusSDR | Zeus |
+|---|---|---|---|---|---|
+| Start RX audio | `audio_start:trx,ch;` | `audio_start:rx;` | `audio_start:rx;` (stub) | `audio_start:rx;` (stub) | `audio_start:rx[,bool];` |
+| Stop RX audio | `audio_stop:trx,ch;` | `audio_stop:rx;` | `audio_stop:rx;` (stub) | `audio_stop:rx;` (stub) | `audio_stop:rx;` |
+| Sample rate query | `audio_samplerate;` | `audio_samplerate;` | `audio_samplerate;` | `audio_samplerate;` | `audio_samplerate;` |
+| Set sample rate | `audio_samplerate:48000;` | `audio_samplerate:48000;` | `audio_samplerate:48000;` | `audio_samplerate:48000;` | `audio_samplerate:48000;` (range 8000–48000) |
 
 ### Key Differences
 
@@ -79,12 +81,12 @@ IQ streaming delivers raw complex baseband samples (float32 interleaved I/Q) in 
 
 ### Command Syntax
 
-| Operation | ExpertSDR3 (reference) | deskHPSDR | Thetis | NereusSDR |
-|---|---|---|---|---|
-| Start IQ stream | `iq_start:trx;` | `iq_start:rx;` or `iq_start;` | `iq_start:rx;` (stub) | `iq_start:rx;` (stub) |
-| Stop IQ stream | `iq_stop:trx;` | `iq_stop:rx;` or `iq_stop;` | `iq_stop:rx;` (stub) | `iq_stop:rx;` (stub) |
-| Set IQ rate | `iq_samplerate:rate;` | `iq_samplerate:rate;` | `iq_samplerate:rate;` | `iq_samplerate:rate;` |
-| Query IQ rate | `iq_samplerate;` | `iq_samplerate;` | `iq_samplerate;` | `iq_samplerate;` |
+| Operation | ExpertSDR3 (reference) | deskHPSDR | Thetis | NereusSDR | Zeus |
+|---|---|---|---|---|---|
+| Start IQ stream | `iq_start:trx;` | `iq_start:rx;` or `iq_start;` | `iq_start:rx;` (stub) | `iq_start:rx;` (stub) | `iq_start:rx[,bool];` |
+| Stop IQ stream | `iq_stop:trx;` | `iq_stop:rx;` or `iq_stop;` | `iq_stop:rx;` (stub) | `iq_stop:rx;` (stub) | `iq_stop:rx;` |
+| Set IQ rate | `iq_samplerate:rate;` | `iq_samplerate:rate;` | `iq_samplerate:rate;` | `iq_samplerate:rate;` | `iq_samplerate:rate;` (echoes hardware rate) |
+| Query IQ rate | `iq_samplerate;` | `iq_samplerate;` | `iq_samplerate;` | `iq_samplerate;` | `iq_samplerate;` |
 
 ### Key Differences
 
@@ -127,12 +129,12 @@ The `trx` command switches a receiver into transmit mode (PTT). This is where **
 
 ### Command Syntax
 
-| Operation | ExpertSDR3 | deskHPSDR | Thetis | NereusSDR |
-|---|---|---|---|---|
-| PTT on | `trx:0,true;` | `trx:0,true;` | `trx:0,true;` | `trx:0,true;` |
-| PTT off | `trx:0,false;` | `trx:0,false;` | `trx:0,false;` | `trx:0,false;` |
-| PTT + TX audio | (unknown) | `trx:0,true,tci;` | not supported | not supported |
-| Query PTT state | `trx:0;` | `trx:0;` | `trx:0;` | `trx:0;` |
+| Operation | ExpertSDR3 | deskHPSDR | Thetis | NereusSDR | Zeus |
+|---|---|---|---|---|---|
+| PTT on | `trx:0,true;` | `trx:0,true;` | `trx:0,true;` | `trx:0,true;` | `trx:0,true;` |
+| PTT off | `trx:0,false;` | `trx:0,false;` | `trx:0,false;` | `trx:0,false;` | `trx:0,false;` |
+| PTT + TX audio | (unknown) | `trx:0,true,tci;` | not supported | not supported | `trx:0,true,tci;` |
+| Query PTT state | `trx:0;` | `trx:0;` | `trx:0;` | `trx:0;` | `trx:0;` |
 
 ### Key Differences
 
@@ -193,16 +195,16 @@ The `vfo` command format is largely **consistent** across implementations. The p
 
 ### Command Syntax
 
-| Mode | ExpertSDR3 sends | deskHPSDR sends | Thetis sends | NereusSDR |
-|---|---|---|---|---|
-| Upper Sideband | `modulation:0,USB;` | `modulation:0,USB;` | `modulation:0,USB;` | accepts `usb` → echoes `USB` |
-| Lower Sideband | `modulation:0,LSB;` | `modulation:0,LSB;` | `modulation:0,LSB;` | accepts `lsb` → echoes `LSB` |
-| CW (upper) | `modulation:0,CWU;` | `modulation:0,CW;` ⚠️ | `modulation:0,CWU;` | accepts `cwu` → echoes `CWU` |
-| CW (lower) | `modulation:0,CWL;` | `modulation:0,CW;` ⚠️ | `modulation:0,CWL;` | accepts `cwl` → echoes `CWL` |
-| Narrow FM | `modulation:0,NFM;` | `modulation:0,FM;` ⚠️ | `modulation:0,NFM;` | accepts `nfm` or `fm` → echoes `FM` |
-| AM | `modulation:0,AM;` | `modulation:0,AM;` | `modulation:0,AM;` | accepts `am` → echoes `AM` |
-| Digital USB | `modulation:0,DIGU;` | `modulation:0,DIGU;` | `modulation:0,DIGU;` | standard |
-| Digital LSB | `modulation:0,DIGL;` | `modulation:0,DIGL;` | `modulation:0,DIGL;` | standard |
+| Mode | ExpertSDR3 sends | deskHPSDR sends | Thetis sends | NereusSDR | Zeus sends |
+|---|---|---|---|---|---|
+| Upper Sideband | `modulation:0,USB;` | `modulation:0,USB;` | `modulation:0,USB;` | accepts `usb` → echoes `USB` | `modulation:0,USB;` |
+| Lower Sideband | `modulation:0,LSB;` | `modulation:0,LSB;` | `modulation:0,LSB;` | accepts `lsb` → echoes `LSB` | `modulation:0,LSB;` |
+| CW (upper) | `modulation:0,CWU;` | `modulation:0,CW;` ⚠️ | `modulation:0,CWU;` | accepts `cwu` → echoes `CWU` | `modulation:0,CWU;` ✓ |
+| CW (lower) | `modulation:0,CWL;` | `modulation:0,CW;` ⚠️ | `modulation:0,CWL;` | accepts `cwl` → echoes `CWL` | `modulation:0,CWL;` ✓ |
+| Narrow FM | `modulation:0,NFM;` | `modulation:0,FM;` ⚠️ | `modulation:0,NFM;` | accepts `nfm` or `fm` → echoes `FM` | `modulation:0,FM;` (accepts `NFM` alias) |
+| AM | `modulation:0,AM;` | `modulation:0,AM;` | `modulation:0,AM;` | accepts `am` → echoes `AM` | `modulation:0,AM;` |
+| Digital USB | `modulation:0,DIGU;` | `modulation:0,DIGU;` | `modulation:0,DIGU;` | standard | `modulation:0,DIGU;` |
+| Digital LSB | `modulation:0,DIGL;` | `modulation:0,DIGL;` | `modulation:0,DIGL;` | standard | `modulation:0,DIGL;` |
 
 ### Key Differences
 
@@ -249,11 +251,11 @@ SETUP:TciCwBecomesCwuAbove10mhz=True;  # map CW → CWU above 10 MHz
 
 ### Command Syntax
 
-| Operation | ExpertSDR3 | deskHPSDR | Thetis | NereusSDR |
-|---|---|---|---|---|
-| Set AGC mode | `agc_auto_ex:rx,ch,bool;` | `agc_mode:rx,mode;` ⚠️ | `agc_mode:rx,mode;` | `agc_mode:rx,mode;` |
-| AGC gain | `agc_gain:rx,gain;` | `agc_gain:rx,gain;` | `agc_gain:rx,gain;` | `agc_gain:rx,gain;` |
-| Query AGC mode | `agc_mode:rx;` | `agc_mode:rx;` | `agc_mode:rx;` | `agc_mode:rx;` |
+| Operation | ExpertSDR3 | deskHPSDR | Thetis | NereusSDR | Zeus |
+|---|---|---|---|---|---|
+| Set AGC mode | `agc_auto_ex:rx,ch,bool;` | `agc_mode:rx,mode;` ⚠️ | `agc_mode:rx,mode;` | `agc_mode:rx,mode;` | `agc_mode:rx,mode;` |
+| AGC gain | `agc_gain:rx,gain;` | `agc_gain:rx,gain;` | `agc_gain:rx,gain;` | `agc_gain:rx,gain;` | `agc_gain:rx,gain;` |
+| Query AGC mode | `agc_mode:rx;` | `agc_mode:rx;` | `agc_mode:rx;` | `agc_mode:rx;` | `agc_mode:rx;` |
 
 ### Key Differences
 
@@ -453,12 +455,24 @@ These are consistent across implementations.
 | `SETUP:` | Unique compat flags to emulate other SDR software behavior |
 | `iq_samplerate` | Accepts any integer (no rate validation) |
 
+### OpenHPSDR Zeus (brianbruff)
+| Command | Behavior |
+|---|---|
+| `audio_start` | `audio_start:rx[,bool];` — 1 or 2 args; bool defaults to true; per-session subscription (not exclusive) |
+| `iq_start` | `iq_start:rx[,bool];` — per-session subscription; echoes `iq_start:rx,bool;` |
+| `iq_samplerate` | Accepts any rate, echoes the **hardware's actual rate** (not the requested rate) |
+| `trx` | Supports `trx:rx,bool,signal_source;` — source ∈ {`tci`, `mic1`, `mic2`, `micPC`, `ecoder2`} |
+| `modulation` | Sends `CWL`/`CWU` correctly (not collapsed); sends `FM` (accepts `NFM` as alias); uppercase output |
+| `agc_mode` | Uses `FIXED/LONG/SLOW/MEDIUM/FAST/CUSTOM`; `OFF`→`FIXED`; `NORMAL`/`MED`→`MEDIUM` |
+| Broadcast | Full state broadcast to all clients; PTT changes ARE broadcast (unlike Thetis/NereusSDR) |
+| Protocol ident | `protocol:ExpertSDR3,2.0;` + `device:Zeus;` in init block |
+
+### AnanCore, station-engine, Bolt SDR (Zeus forks)
+All are derived from OpenHPSDR Zeus and likely inherit its TCI server implementation. Not independently verified.
+
 ### Lyra-SDR-cpp, Kainos
 - **Lyra-SDR-cpp**: Uses WDSP; standard TCI interface expected; full analysis pending
 - **Kainos**: Early stage; TCI interface not yet confirmed functional
-
-### OpenHPSDR Zeus family (Zeus, AnanCore, station-engine, Bolt SDR)
-None of these implement a TCI server. They are all forks of OpenHPSDR Zeus, which controls ANAN/Hermes hardware via the OpenHPSDR P1/P2 UDP protocol. Bolt SDR started as a Zeus fork; its later BoltSDR-v2 merged AnanCore. None expose a TCI server endpoint.
 
 ---
 
@@ -549,5 +563,7 @@ trx:0,false;
 | Thetis (ramdor/mi0bot) | NereusSDR test matrix (cites `TCIServer.cs` line numbers for v2.10.3.13–15) |
 | NereusSDR | `nereus_matrix.csv` (official TCI verification test matrix, 17 KB) |
 | ExpertSDR3 | TCI protocol reference, on7off/TCI-Remote reference docs |
+| OpenHPSDR Zeus | `TciSession.cs` (2096 lines) + `TciProtocol.cs` (244 lines) + `TciHandshake.cs` — direct source analysis |
 | Lyra-SDR-cpp | Source scan (WDSP-based; standard TCI expected) |
-| Bolt SDR, Kainos | Limited — partial source analysis only |
+| AnanCore, station-engine, Bolt SDR | Zeus forks — TCI inherited; not independently analyzed |
+| Kainos | Skeleton only — TCI not confirmed |
