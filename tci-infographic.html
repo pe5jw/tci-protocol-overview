@@ -1,0 +1,1428 @@
+<title>TCI Protocol Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+/* ── design tokens ──────────────────────────────────────────── */
+/* layout: wide-column editorial with full-bleed section bands  */
+:root {
+  --bg:        #0d1117;
+  --bg2:       #161b22;
+  --bg3:       #21262d;
+  --surface:   #1c2128;
+  --border:    #30363d;
+  --fg:        #e6edf3;
+  --fg2:       #8b949e;
+  --fg3:       #6e7681;
+  --accent:    #58a6ff;
+  --accent2:   #3fb950;
+  --warn:      #d29922;
+  --danger:    #f85149;
+  --purple:    #bc8cff;
+  --teal:      #39d353;
+  --orange:    #ffa657;
+
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-head: 'Space Grotesk', 'Inter', sans-serif;
+
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+}
+
+/* ── nav ───────────────────────────────────────────────────── */
+.nav {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 100;
+  background: rgba(13,17,23,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding-block: 12px;
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav::-webkit-scrollbar { display: none; }
+.nav-logo {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.nav a {
+  font-size: 13px;
+  color: var(--fg2);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .15s;
+}
+.nav a:hover { color: var(--fg); }
+
+/* ── hero ──────────────────────────────────────────────────── */
+.hero {
+  background: linear-gradient(135deg, #0d1117 0%, #0d1f36 50%, #0d1117 100%);
+  border-bottom: 1px solid var(--border);
+  padding-block: 64px 48px;
+  padding-left: max(32px, env(safe-area-inset-left, 0px));
+  padding-right: max(32px, env(safe-area-inset-right, 0px));
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(88,166,255,.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: rgba(88,166,255,.1);
+  border: 1px solid rgba(88,166,255,.25);
+  border-radius: 4px;
+  padding: 3px 8px;
+  letter-spacing: .05em;
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-family: var(--font-head);
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 700;
+  margin: 0 0 16px;
+  line-height: 1.15;
+  text-wrap: balance;
+  max-width: 700px;
+}
+.hero h1 span { color: var(--accent); }
+.hero-sub {
+  font-size: 17px;
+  color: var(--fg2);
+  max-width: 560px;
+  margin: 0 0 32px;
+  line-height: 1.55;
+}
+.hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hero-stat-n {
+  font-family: var(--font-head);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.hero-stat-l {
+  font-size: 12px;
+  color: var(--fg3);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+/* ── section wrapper ───────────────────────────────────────── */
+.section {
+  padding-block: 56px;
+  padding-left: max(32px, env(safe-area-inset-left, 0px));
+  padding-right: max(32px, env(safe-area-inset-right, 0px));
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.section-alt {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+.section-alt .section-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding-left: max(32px, env(safe-area-inset-left, 0px));
+  padding-right: max(32px, env(safe-area-inset-right, 0px));
+}
+.section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.section-title {
+  font-family: var(--font-head);
+  font-size: clamp(20px, 3vw, 30px);
+  font-weight: 700;
+  margin: 0 0 8px;
+  text-wrap: balance;
+}
+.section-desc {
+  color: var(--fg2);
+  margin: 0 0 36px;
+  max-width: 600px;
+  font-size: 15px;
+}
+
+/* ── architecture diagram ──────────────────────────────────── */
+.arch-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.arch-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  text-align: center;
+}
+.arch-box-title {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: var(--fg);
+}
+.arch-box-sub { font-size: 12px; color: var(--fg3); line-height: 1.4; }
+.arch-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+}
+.arch-arrow-line {
+  width: 80px;
+  height: 1px;
+  background: linear-gradient(to right, var(--accent), var(--accent2));
+  position: relative;
+}
+.arch-arrow-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg3);
+  text-align: center;
+  white-space: nowrap;
+}
+.arch-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(88,166,255,.12);
+  color: var(--accent);
+  border: 1px solid rgba(88,166,255,.2);
+}
+.chip.green { background: rgba(63,185,80,.12); color: var(--accent2); border-color: rgba(63,185,80,.2); }
+.chip.purple { background: rgba(188,140,255,.12); color: var(--purple); border-color: rgba(188,140,255,.2); }
+.chip.orange { background: rgba(255,166,87,.12); color: var(--orange); border-color: rgba(255,166,87,.2); }
+
+/* ── binary frame diagram ──────────────────────────────────── */
+.frame-diagram {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  overflow-x: auto;
+}
+.frame-row {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+.frame-cell {
+  flex: 1;
+  min-width: 60px;
+  padding: 8px 6px;
+  text-align: center;
+  border-radius: 4px;
+  line-height: 1.3;
+}
+.frame-cell.type   { background: rgba(88,166,255,.15); color: var(--accent); border: 1px solid rgba(88,166,255,.25); flex: 0.7; }
+.frame-cell.rxidx  { background: rgba(63,185,80,.12); color: var(--accent2); border: 1px solid rgba(63,185,80,.2); flex: 0.7; }
+.frame-cell.rate   { background: rgba(188,140,255,.12); color: var(--purple); border: 1px solid rgba(188,140,255,.2); }
+.frame-cell.fmt    { background: rgba(255,166,87,.12); color: var(--orange); border: 1px solid rgba(255,166,87,.2); flex: 0.5; }
+.frame-cell.ch     { background: rgba(248,81,73,.12); color: var(--danger); border: 1px solid rgba(248,81,73,.2); flex: 0.5; }
+.frame-cell.cnt    { background: rgba(210,153,34,.12); color: var(--warn); border: 1px solid rgba(210,153,34,.2); }
+.frame-cell.rsv    { background: var(--bg3); color: var(--fg3); border: 1px solid var(--border); flex: 2; }
+.frame-cell.payload { background: var(--bg3); color: var(--fg); border: 1px solid var(--border); flex: 4; }
+.frame-bytes {
+  font-size: 10px;
+  color: var(--fg3);
+  margin-top: 2px;
+  display: block;
+}
+.frame-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.frame-legend-item {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.frame-legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── code blocks ───────────────────────────────────────────── */
+.code-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.code-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg2);
+}
+.code-card-dots {
+  display: flex; gap: 6px;
+}
+.code-card-dots span {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.dot-red { background: #ff5f57; }
+.dot-yellow { background: #febc2e; }
+.dot-green { background: #28c840; }
+.code-card pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.code-card code { font-family: var(--font-mono); }
+
+/* hljs theme override — minimal dark */
+.hljs { background: transparent; color: var(--fg); }
+.hljs-comment { color: var(--fg3); }
+.hljs-string { color: var(--accent2); }
+.hljs-number { color: var(--orange); }
+.hljs-keyword { color: var(--purple); }
+.hljs-title { color: var(--accent); font-weight: 600; }
+.hljs-built_in { color: var(--accent); }
+.hljs-attr { color: var(--warn); }
+.hljs-variable { color: var(--fg); }
+.hljs-literal { color: var(--orange); }
+.hljs-type { color: var(--teal); }
+.hljs-params { color: var(--fg2); }
+
+/* ── impl comparison table ─────────────────────────────────── */
+.impl-grid {
+  display: grid;
+  grid-template-columns: 160px repeat(5, 1fr);
+  gap: 2px;
+  font-size: 12px;
+  overflow-x: auto;
+}
+.impl-grid.wide {
+  grid-template-columns: 140px repeat(10, minmax(80px, 1fr));
+}
+.ig-cell {
+  padding: 10px 12px;
+  background: var(--surface);
+  border-radius: 3px;
+  line-height: 1.35;
+  min-width: 0;
+}
+.ig-header {
+  background: var(--bg3);
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: .04em;
+  color: var(--fg);
+}
+.ig-label {
+  background: var(--bg3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg2);
+  font-weight: 600;
+}
+.ig-yes  { color: var(--accent2); }
+.ig-no   { color: var(--fg3); }
+.ig-warn { color: var(--warn); }
+.ig-stub { color: var(--purple); }
+.ig-full { color: var(--accent); font-weight: 600; }
+
+/* ── deviation cards ───────────────────────────────────────── */
+.dev-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.dev-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.dev-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.dev-card.d1::before { background: linear-gradient(90deg, var(--accent), var(--purple)); }
+.dev-card.d2::before { background: linear-gradient(90deg, var(--warn), var(--orange)); }
+.dev-card.d3::before { background: linear-gradient(90deg, var(--accent2), var(--teal)); }
+.dev-card.d4::before { background: linear-gradient(90deg, var(--purple), var(--accent)); }
+.dev-card.d5::before { background: linear-gradient(90deg, var(--danger), var(--warn)); }
+.dev-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg3);
+  letter-spacing: .08em;
+  margin-bottom: 8px;
+}
+.dev-title {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 8px;
+  color: var(--fg);
+}
+.dev-body {
+  font-size: 13px;
+  color: var(--fg2);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.dev-fix {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg3);
+  border-left: 3px solid var(--accent);
+  padding: 8px 10px;
+  border-radius: 0 4px 4px 0;
+  color: var(--fg);
+  line-height: 1.5;
+}
+
+/* ── flow diagrams ─────────────────────────────────────────── */
+.flow-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.fb-client { background: rgba(88,166,255,.15); border: 1px solid rgba(88,166,255,.3); color: var(--accent); }
+.fb-server { background: rgba(63,185,80,.12); border: 1px solid rgba(63,185,80,.25); color: var(--accent2); }
+.fb-all    { background: rgba(188,140,255,.12); border: 1px solid rgba(188,140,255,.25); color: var(--purple); }
+.fb-note   { background: rgba(255,166,87,.1); border: 1px solid rgba(255,166,87,.2); color: var(--orange); font-size: 11px; }
+
+.flow-arrow {
+  font-size: 18px;
+  color: var(--fg3);
+  line-height: 1;
+  padding: 0 4px;
+}
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+/* ── server detection table ────────────────────────────────── */
+.detect-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 2px;
+  font-size: 12px;
+  overflow-x: auto;
+}
+.dg-cell {
+  padding: 9px 12px;
+  background: var(--surface);
+  border-radius: 3px;
+}
+.dg-header { background: var(--bg3); font-weight: 600; font-size: 11px; letter-spacing: .04em; color: var(--fg2); }
+.dg-mono { font-family: var(--font-mono); }
+.dg-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+}
+.badge-full { background: rgba(63,185,80,.15); color: var(--accent2); }
+.badge-stub { background: rgba(188,140,255,.15); color: var(--purple); }
+.badge-excl { background: rgba(255,166,87,.15); color: var(--orange); }
+.badge-none { background: rgba(110,118,129,.1); color: var(--fg3); }
+
+/* ── recipe section ────────────────────────────────────────── */
+.recipe-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.recipe-step {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+.recipe-n {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-head);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.recipe-body {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.recipe-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: var(--fg);
+}
+.recipe-desc {
+  font-size: 13px;
+  color: var(--fg2);
+  margin-bottom: 10px;
+}
+.recipe-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg3);
+  border-radius: 5px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  line-height: 1.55;
+  color: var(--fg);
+}
+
+/* ── agc table ─────────────────────────────────────────────── */
+.agc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: 13px;
+  overflow-x: auto;
+}
+.agc-table th {
+  background: var(--bg3);
+  padding: 8px 12px;
+  text-align: left;
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--fg2);
+  border-radius: 3px;
+}
+.agc-table td {
+  padding: 8px 12px;
+  background: var(--surface);
+  border-radius: 3px;
+  vertical-align: top;
+}
+.agc-table td:first-child { font-family: var(--font-mono); font-size: 12px; color: var(--accent2); }
+td code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--warn);
+}
+
+/* ── footer ────────────────────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding-block: 32px;
+  padding-left: max(32px, env(safe-area-inset-left, 0px));
+  padding-right: max(32px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--fg3);
+}
+.footer a { color: var(--accent); text-decoration: none; }
+
+/* ── tabs ──────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg3);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+  margin-bottom: -1px;
+}
+.tab-btn:hover { color: var(--fg2); }
+.tab-btn.active { color: var(--fg); border-bottom-color: var(--accent); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+@media (max-width: 640px) {
+  .arch-grid { grid-template-columns: 1fr; gap: 8px; }
+  .arch-arrow { transform: rotate(90deg); padding: 8px 0; }
+  .impl-grid { grid-template-columns: 120px repeat(5, minmax(70px, 1fr)); }
+  .hero { padding-block: 40px 32px; }
+  .section { padding-block: 40px; }
+}
+</style>
+
+<!-- NAV -->
+<nav class="nav">
+  <span class="nav-logo">TCI Protocol</span>
+  <a href="#architecture">Architecture</a>
+  <a href="#frame">Binary Frame</a>
+  <a href="#implementations">Implementations</a>
+  <a href="#deviations">Deviations</a>
+  <a href="#code">Code Examples</a>
+  <a href="#detection">Detection</a>
+  <a href="#agc">AGC Values</a>
+  <a href="#recipe">Universal Client</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">WebSocket Protocol · Port 50001</div>
+  <h1>TCI <span>Protocol</span><br>Implementation Guide</h1>
+  <p class="hero-sub">
+    Transceiver Control Interface — a WebSocket-based protocol for SDR control and audio/IQ streaming,
+    originated by Expert Electronics (ExpertSDR2/3) and implemented across 10+ open-source applications.
+  </p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="hero-stat-n">10</span><span class="hero-stat-l">Implementations</span></div>
+    <div class="hero-stat"><span class="hero-stat-n">50001</span><span class="hero-stat-l">Default Port</span></div>
+    <div class="hero-stat"><span class="hero-stat-n">5</span><span class="hero-stat-l">Key Deviations</span></div>
+    <div class="hero-stat"><span class="hero-stat-n">64</span><span class="hero-stat-l">Byte Header</span></div>
+  </div>
+</div>
+
+<!-- SECTION 1: ARCHITECTURE -->
+<div id="architecture" class="section">
+  <div class="section-eyebrow">§ 01 — Architecture</div>
+  <h2 class="section-title">WebSocket Client–Server Model</h2>
+  <p class="section-desc">TCI uses RFC 6455 WebSocket with text frames for commands and binary frames for audio/IQ data.</p>
+
+  <div class="arch-grid">
+    <div class="arch-box">
+      <div class="arch-box-title">TCI Client</div>
+      <div class="arch-box-sub">Logger · Spotting · Waterfall<br>Audio app · Automation</div>
+      <div class="arch-chips">
+        <span class="chip">sends commands</span>
+        <span class="chip">receives events</span>
+        <span class="chip green">receives audio/IQ</span>
+        <span class="chip orange">sends TX audio</span>
+      </div>
+    </div>
+
+    <div class="arch-arrow">
+      <div class="arch-arrow-line"></div>
+      <div class="arch-arrow-label">ws://host:50001</div>
+      <div class="arch-arrow-label">text + binary frames</div>
+    </div>
+
+    <div class="arch-box">
+      <div class="arch-box-title">TCI Server</div>
+      <div class="arch-box-sub">SDR application<br>ExpertSDR · deskHPSDR · Zeus · …</div>
+      <div class="arch-chips">
+        <span class="chip">sends init block</span>
+        <span class="chip green">streams IQ/audio</span>
+        <span class="chip purple">broadcasts events</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 800px; margin-left: auto; margin-right: auto;">
+    <div class="code-card">
+      <div class="code-card-header">
+        <div class="code-card-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+        <span>TCI Init Block (server → client)</span>
+      </div>
+      <pre><code class="language-text">protocol:ExpertSDR3,2.0;
+device:Zeus;
+receive_only:false;
+trx_count:1;
+dds:0,14100000;
+channel_count:2;
+vfo:0,0,14100000;
+modulation:0,USB;
+rx_enable:0,true;
+volume:0,-10;
+squelch_enable:0,false;
+ready</code></pre>
+    </div>
+    <div class="code-card">
+      <div class="code-card-header">
+        <div class="code-card-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+        <span>Text Frame Format</span>
+      </div>
+      <pre><code class="language-text">command:arg1,arg2,arg3;
+
+# Examples:
+vfo:0,0,14225000;
+modulation:0,USB;
+trx:0,true;
+iq_start:0;
+audio_start:0;
+rx_filter_band:0,0,-2800,2800;
+agc_mode:0,FAST;</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: BINARY FRAME -->
+<div id="frame" class="section-alt">
+<div class="section-inner">
+  <div class="section-eyebrow">§ 02 — Binary Frames</div>
+  <h2 class="section-title">64-Byte Header Structure</h2>
+  <p class="section-desc">All binary TCI frames begin with a fixed 64-byte header followed by float32 sample payload.</p>
+
+  <div class="frame-diagram">
+    <div style="font-size:11px;color:var(--fg3);margin-bottom:8px;font-family:var(--font-mono);">HEADER (64 bytes) — big-endian</div>
+    <div class="frame-row">
+      <div class="frame-cell type">frame_type<span class="frame-bytes">uint8</span></div>
+      <div class="frame-cell rxidx">rx_index<span class="frame-bytes">uint8</span></div>
+      <div class="frame-cell rate">sample_rate<span class="frame-bytes">uint32</span></div>
+      <div class="frame-cell fmt">format<span class="frame-bytes">uint8</span></div>
+      <div class="frame-cell ch">channels<span class="frame-bytes">uint8</span></div>
+      <div class="frame-cell cnt">sample_count<span class="frame-bytes">uint32</span></div>
+      <div class="frame-cell rsv">reserved / padding<span class="frame-bytes">52 bytes</span></div>
+    </div>
+    <div class="frame-row">
+      <div class="frame-cell payload" style="flex:1;">float32 samples (channels interleaved: L/R or I/Q)</div>
+    </div>
+    <div class="frame-legend">
+      <div class="frame-legend-item">
+        <div class="frame-legend-dot" style="background:rgba(88,166,255,.4)"></div>
+        <span style="color:var(--accent)">frame_type: 0=IQ, 1=RX audio, 2=TX audio, 3=chrono</span>
+      </div>
+      <div class="frame-legend-item">
+        <div class="frame-legend-dot" style="background:rgba(255,166,87,.4)"></div>
+        <span style="color:var(--orange)">format: 0=float32LE (typical)</span>
+      </div>
+      <div class="frame-legend-item">
+        <div class="frame-legend-dot" style="background:rgba(248,81,73,.4)"></div>
+        <span style="color:var(--danger)">channels: 1=mono, 2=stereo/IQ</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SECTION 3: IMPLEMENTATIONS -->
+<div id="implementations" class="section">
+  <div class="section-eyebrow">§ 03 — Implementations</div>
+  <h2 class="section-title">10 SDR Applications</h2>
+  <p class="section-desc">Feature comparison across all analyzed TCI server implementations.</p>
+
+  <div style="overflow-x:auto;">
+  <div class="impl-grid wide" style="min-width:900px;">
+    <!-- Headers -->
+    <div class="ig-cell ig-header">Feature</div>
+    <div class="ig-cell ig-header">ExpertSDR2</div>
+    <div class="ig-cell ig-header">ExpertSDR3</div>
+    <div class="ig-cell ig-header">deskHPSDR</div>
+    <div class="ig-cell ig-header">Thetis</div>
+    <div class="ig-cell ig-header">NereusSDR</div>
+    <div class="ig-cell ig-header">Zeus</div>
+    <div class="ig-cell ig-header">AnanCore</div>
+    <div class="ig-cell ig-header">station-eng.</div>
+    <div class="ig-cell ig-header">BoltSDR</div>
+    <div class="ig-cell ig-header">Lyra-SDR</div>
+
+    <!-- IQ streaming -->
+    <div class="ig-cell ig-label">IQ streaming</div>
+    <div class="ig-cell ig-full">Full</div>
+    <div class="ig-cell ig-full">Full</div>
+    <div class="ig-cell ig-warn">Exclusive</div>
+    <div class="ig-cell ig-stub">Stub</div>
+    <div class="ig-cell ig-stub">Stub</div>
+    <div class="ig-cell ig-full">Full</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Yes</div>
+
+    <!-- Audio streaming -->
+    <div class="ig-cell ig-label">Audio stream</div>
+    <div class="ig-cell ig-full">Full</div>
+    <div class="ig-cell ig-full">Full</div>
+    <div class="ig-cell ig-full">Full</div>
+    <div class="ig-cell ig-stub">Stub</div>
+    <div class="ig-cell ig-stub">Stub</div>
+    <div class="ig-cell ig-full">Full</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Yes</div>
+
+    <!-- PTT broadcast -->
+    <div class="ig-cell ig-label">PTT broadcast</div>
+    <div class="ig-cell ig-full">All</div>
+    <div class="ig-cell ig-full">All</div>
+    <div class="ig-cell ig-full">All</div>
+    <div class="ig-cell ig-warn">Requester</div>
+    <div class="ig-cell ig-warn">Requester</div>
+    <div class="ig-cell ig-full">All</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Yes</div>
+
+    <!-- AGC command -->
+    <div class="ig-cell ig-label">AGC command</div>
+    <div class="ig-cell" style="font-family:var(--font-mono);font-size:11px;color:var(--fg2)">agc_mode</div>
+    <div class="ig-cell" style="font-family:var(--font-mono);font-size:11px;color:var(--warn)">agc_auto_ex</div>
+    <div class="ig-cell" style="font-family:var(--font-mono);font-size:11px;color:var(--fg2)">agc_mode</div>
+    <div class="ig-cell" style="font-family:var(--font-mono);font-size:11px;color:var(--fg2)">agc_mode</div>
+    <div class="ig-cell" style="font-family:var(--font-mono);font-size:11px;color:var(--fg2)">agc_mode</div>
+    <div class="ig-cell" style="font-family:var(--font-mono);font-size:11px;color:var(--fg2)">agc_mode</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Yes</div>
+
+    <!-- CW mode -->
+    <div class="ig-cell ig-label">CW tx mode</div>
+    <div class="ig-cell ig-full">CWL/CWU</div>
+    <div class="ig-cell ig-full">CWL/CWU</div>
+    <div class="ig-cell ig-warn">→ CW</div>
+    <div class="ig-cell ig-warn">→ CW</div>
+    <div class="ig-cell ig-warn">→ CW</div>
+    <div class="ig-cell ig-full">CWL/CWU</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Yes</div>
+
+    <!-- WDSP DSP -->
+    <div class="ig-cell ig-label">WDSP DSP</div>
+    <div class="ig-cell ig-no">—</div>
+    <div class="ig-cell ig-no">—</div>
+    <div class="ig-cell ig-yes">Yes</div>
+    <div class="ig-cell ig-yes">Yes</div>
+    <div class="ig-cell ig-yes">Yes</div>
+    <div class="ig-cell ig-yes">Yes</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Fork</div>
+    <div class="ig-cell ig-yes">Yes</div>
+  </div>
+  </div>
+  <div style="margin-top:12px;font-size:12px;color:var(--fg3);">
+    "Fork" = inherits from OpenHPSDR Zeus (AnanCore, station-engine, BoltSDR, BoltSDR-v2/AnanCore fork)
+  </div>
+</div>
+
+<!-- SECTION 4: DEVIATIONS -->
+<div id="deviations" class="section-alt">
+<div class="section-inner">
+  <div class="section-eyebrow">§ 04 — Key Deviations</div>
+  <h2 class="section-title">5 Deviations That Require Client Workarounds</h2>
+  <p class="section-desc">A universal TCI client must handle these behavioral differences across implementations.</p>
+
+  <div class="dev-grid">
+    <div class="dev-card d1">
+      <div class="dev-num">DEVIATION 01</div>
+      <div class="dev-title">IQ Exclusive Ownership</div>
+      <div class="dev-body">deskHPSDR grants IQ streaming to the first caller only. Subsequent <code>iq_start</code> calls are silently accepted. The owner's <code>iq_stop</code> halts all IQ streams, including those of other clients.</div>
+      <div class="dev-fix">Fix: detect via <code>protocol:deskHPSDR</code> in init block; implement backoff + reconnect on stream timeout.</div>
+    </div>
+
+    <div class="dev-card d2">
+      <div class="dev-title">Thetis/NereusSDR: Audio & IQ Stubs</div>
+      <div class="dev-num">DEVIATION 02</div>
+      <div class="dev-body"><code>audio_start</code>, <code>audio_stop</code>, <code>iq_start</code>, <code>iq_stop</code> are accepted with no error but produce no binary frames. NereusSDR provides <code>SETUP:</code> flags to enable streaming.</div>
+      <div class="dev-fix">Fix: send <code>SETUP:TciAlwaysStreamIq=true;</code> for NereusSDR, or use WAV audio engine instead of TCI audio.</div>
+    </div>
+
+    <div class="dev-card d3">
+      <div class="dev-title">PTT Not Broadcast</div>
+      <div class="dev-num">DEVIATION 03</div>
+      <div class="dev-body">Thetis and NereusSDR echo <code>trx:0,true;</code> only to the requesting client. Other connected clients receive no PTT state change notification.</div>
+      <div class="dev-fix">Fix: maintain own TX state per connection; don't rely on receiving <code>trx:</code> events from other clients.</div>
+    </div>
+
+    <div class="dev-card d4">
+      <div class="dev-title">AGC Command Name</div>
+      <div class="dev-num">DEVIATION 04</div>
+      <div class="dev-body">ExpertSDR3 uses <code>agc_auto_ex:trx,rx,mode,…</code> with numeric mode values. All open-source implementations use <code>agc_mode:trx,rx,NAME</code> with named strings like <code>FAST</code>, <code>SLOW</code>.</div>
+      <div class="dev-fix">Fix: detect ExpertSDR3 via init block, use <code>agc_auto_ex</code> for it and <code>agc_mode</code> for everything else.</div>
+    </div>
+
+    <div class="dev-card d5">
+      <div class="dev-title">Modulation Aliases</div>
+      <div class="dev-num">DEVIATION 05</div>
+      <div class="dev-body">deskHPSDR translates <code>CWL</code>/<code>CWU</code> → <code>CW</code> and <code>NFM</code> → <code>FM</code> in both directions. ExpertSDR and Zeus preserve <code>CWL</code>/<code>CWU</code> and use <code>FM</code> (not <code>NFM</code>).</div>
+      <div class="dev-fix">Fix: send both <code>CW</code> and <code>CWL</code>/<code>CWU</code>; accept all variants when parsing incoming modulation events.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SECTION 5: CODE EXAMPLES -->
+<div id="code" class="section">
+  <div class="section-eyebrow">§ 05 — Code Examples</div>
+  <h2 class="section-title">Implementation Patterns</h2>
+  <p class="section-desc">Real command syntax and JavaScript examples for key workflow operations.</p>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('tab-connect', this)">Connect & Init</button>
+    <button class="tab-btn" onclick="showTab('tab-iq', this)">IQ Streaming</button>
+    <button class="tab-btn" onclick="showTab('tab-audio', this)">Audio Flow</button>
+    <button class="tab-btn" onclick="showTab('tab-ptt', this)">PTT / trx</button>
+    <button class="tab-btn" onclick="showTab('tab-vfo', this)">VFO & Mode</button>
+  </div>
+
+  <div id="tab-connect" class="tab-panel active">
+    <div class="code-card">
+      <div class="code-card-header">
+        <div class="code-card-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+        <span>connect-and-parse-init.js</span>
+      </div>
+      <pre><code class="language-javascript">const ws = new WebSocket('ws://localhost:50001');
+const state = { ready: false, protocol: null, device: null };
+
+ws.onmessage = (event) => {
+  if (typeof event.data === 'string') {
+    // Text frame: command:arg1,arg2;
+    const text = event.data.trim();
+
+    if (text === 'ready') {
+      state.ready = true;
+      console.log('TCI server ready:', state);
+      onReady(ws, state);
+      return;
+    }
+
+    const m = text.match(/^(\w+):(.*);?$/);
+    if (!m) return;
+    const [, cmd, args] = m;
+    const argv = args.split(',');
+
+    switch (cmd) {
+      case 'protocol': state.protocol = argv[0]; break;
+      case 'device':   state.device   = argv[0]; break;
+      case 'trx_count': state.trxCount = +argv[0]; break;
+      case 'dds':  /* initial DDS freq */ break;
+      case 'trx':  onTrxChange(+argv[0], argv[1]==='true'); break;
+      case 'vfo':  onVfoChange(+argv[0], +argv[1], +argv[2]); break;
+    }
+  } else {
+    // Binary frame: ArrayBuffer with 64-byte header
+    parseBinaryFrame(event.data);
+  }
+};</code></pre>
+    </div>
+  </div>
+
+  <div id="tab-iq" class="tab-panel">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="code-card">
+        <div class="code-card-header">
+          <div class="code-card-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span>iq-start-standard.js</span>
+        </div>
+        <pre><code class="language-javascript">// Standard (ExpertSDR, Zeus, deskHPSDR*)
+// *deskHPSDR: first caller gets exclusive ownership
+
+function startIQ(ws, rx, rate = 48000) {
+  ws.send(`iq_start:${rx};`);
+  ws.send(`iq_sample_rate:${rx},${rate};`);
+}
+
+function stopIQ(ws, rx) {
+  ws.send(`iq_stop:${rx};`);
+  // deskHPSDR: this stops ALL clients' IQ!
+}
+
+// Zeus alternative syntax:
+// ws.send(`iq_start:${rx},true;`);
+// ws.send(`iq_start:${rx},false;`); // stop</code></pre>
+      </div>
+      <div class="code-card">
+        <div class="code-card-header">
+          <div class="code-card-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span>parse-iq-frame.js</span>
+        </div>
+        <pre><code class="language-javascript">function parseBinaryFrame(buffer) {
+  const view = new DataView(buffer);
+  const frameType  = view.getUint8(0);
+  const rxIndex    = view.getUint8(1);
+  const sampleRate = view.getUint32(2, false); // BE
+  const format     = view.getUint8(6);
+  const channels   = view.getUint8(7);
+  const sampleCount= view.getUint32(8, false); // BE
+
+  if (frameType === 0) { // IQ frame
+    const samples = new Float32Array(
+      buffer, 64, sampleCount * channels
+    );
+    // Even indices = I, odd = Q
+    processIQ(rxIndex, sampleRate, samples);
+  }
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-audio" class="tab-panel">
+    <div class="code-card">
+      <div class="code-card-header">
+        <div class="code-card-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+        <span>rx-audio-flow.js</span>
+      </div>
+      <pre><code class="language-javascript">// RX audio: server → client (frame_type = 1)
+
+function startRxAudio(ws, state, rx = 0, rate = 8000) {
+  if (state.protocol === 'NereusSDR') {
+    // NereusSDR needs flag to enable audio streaming
+    ws.send('SETUP:TciAlwaysStreamIq=true;');
+  }
+  ws.send(`audio_start:${rx};`);
+  // Note: Thetis/NereusSDR accept but may not stream
+  // Zeus supports: audio_start:0,true;  (2-arg form)
+}
+
+// TX audio: client → server (frame_type = 2)
+function sendTxAudio(ws, float32Samples, sampleRate = 8000) {
+  const HEADER_SIZE = 64;
+  const buf = new ArrayBuffer(HEADER_SIZE + float32Samples.length * 4);
+  const view = new DataView(buf);
+  view.setUint8(0, 2);                        // frame_type = TX audio
+  view.setUint8(1, 0);                        // rx index
+  view.setUint32(2, sampleRate, false);       // BE sample rate
+  view.setUint8(6, 0);                        // format = float32
+  view.setUint8(7, 1);                        // 1 channel (mono TX)
+  view.setUint32(8, float32Samples.length, false); // sample count
+  const samples = new Float32Array(buf, HEADER_SIZE);
+  samples.set(float32Samples);
+  ws.send(buf);
+}</code></pre>
+    </div>
+  </div>
+
+  <div id="tab-ptt" class="tab-panel">
+    <div class="code-card">
+      <div class="code-card-header">
+        <div class="code-card-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+        <span>ptt-handling.js</span>
+      </div>
+      <pre><code class="language-javascript">// PTT command: trx:trx_index,tx_enable[,signal_source];
+// signal_source: MIC | USB | GENERATOR | IQ | NONE (Zeus/ExpertSDR3)
+
+function setPTT(ws, state, trxIdx, enable) {
+  ws.send(`trx:${trxIdx},${enable};`);
+}
+
+// IMPORTANT: Thetis/NereusSDR only echo back to the requesting client
+// Other connected clients do NOT receive the trx: event
+// If your app needs to share PTT state across connections,
+// track it in your own application state.
+
+// Zeus note: echoes the post-call truth (not the requested value)
+// so trx:0,true; may echo trx:0,false; if the radio vetoed TX.
+
+ws.onmessage = (event) => {
+  if (typeof event.data !== 'string') return;
+  const m = event.data.match(/^trx:(\d+),(true|false)/);
+  if (m) {
+    const [, trxIdx, isTransmitting] = m;
+    updatePttState(+trxIdx, isTransmitting === 'true');
+  }
+};</code></pre>
+    </div>
+  </div>
+
+  <div id="tab-vfo" class="tab-panel">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="code-card">
+        <div class="code-card-header">
+          <div class="code-card-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span>vfo-and-modulation.js</span>
+        </div>
+        <pre><code class="language-javascript">// vfo:trx,channel,frequency_hz;
+ws.send('vfo:0,0,14225000;');  // 14.225 MHz VFO-A
+ws.send('vfo:0,1,14225000;');  // VFO-B (offset)
+
+// modulation:trx,mode;
+ws.send('modulation:0,USB;');
+ws.send('modulation:0,LSB;');
+ws.send('modulation:0,CWU;'); // ExpertSDR/Zeus
+ws.send('modulation:0,CW;');  // deskHPSDR/Thetis
+
+// Portable: send CW for deskHPSDR compat
+// and accept both CW and CWL/CWU in events
+function setMode(ws, state, trx, mode) {
+  const isDesk = state.protocol === 'deskHPSDR';
+  const m = (isDesk && (mode==='CWL'||mode==='CWU'))
+    ? 'CW' : mode;
+  ws.send(`modulation:${trx},${m};`);
+}</code></pre>
+      </div>
+      <div class="code-card">
+        <div class="code-card-header">
+          <div class="code-card-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+          <span>agc-mode.js</span>
+        </div>
+        <pre><code class="language-javascript">// AGC is the biggest naming deviation.
+// ExpertSDR3: agc_auto_ex:trx,rx,attack,decay,hang,gain
+// All open-source: agc_mode:trx,rx,NAME
+
+function setAGC(ws, state, trx, rx, mode) {
+  if (state.protocol === 'ExpertSDR3') {
+    // Named modes → numeric ExpertSDR3 params
+    const presets = {
+      FAST:   '0.002,0.500,0.250,-20',
+      MEDIUM: '0.002,1.200,0.500,-20',
+      SLOW:   '0.002,3.000,2.000,-20',
+      LONG:   '0.002,5.000,3.000,-20',
+      FIXED:  '0.002,0.500,0.250,0',
+    };
+    const p = presets[mode] || presets.MEDIUM;
+    ws.send(`agc_auto_ex:${trx},${rx},${p};`);
+  } else {
+    // All open-source implementations
+    ws.send(`agc_mode:${trx},${rx},${mode};`);
+  }
+}</code></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 6: SERVER DETECTION -->
+<div id="detection" class="section-alt">
+<div class="section-inner">
+  <div class="section-eyebrow">§ 06 — Server Detection</div>
+  <h2 class="section-title">Identify the Server from Init Block</h2>
+  <p class="section-desc">Use <code>protocol:</code> and <code>device:</code> init commands to adapt client behavior at connection time.</p>
+
+  <div style="overflow-x:auto;">
+  <div class="detect-grid" style="min-width:600px;">
+    <div class="dg-cell dg-header">protocol:</div>
+    <div class="dg-cell dg-header">device:</div>
+    <div class="dg-cell dg-header">Application</div>
+    <div class="dg-cell dg-header">Behavior</div>
+
+    <div class="dg-cell dg-mono" style="color:var(--accent)">ExpertSDR2</div>
+    <div class="dg-cell dg-mono" style="color:var(--fg2)">ANAN / Hermit</div>
+    <div class="dg-cell">ExpertSDR 2.x</div>
+    <div class="dg-cell"><span class="dg-badge badge-full">Full</span></div>
+
+    <div class="dg-cell dg-mono" style="color:var(--accent)">ExpertSDR3</div>
+    <div class="dg-cell dg-mono" style="color:var(--fg2)">ANAN-200D / …</div>
+    <div class="dg-cell">ExpertSDR 3.x</div>
+    <div class="dg-cell"><span class="dg-badge badge-full">Full</span> use <code>agc_auto_ex</code></div>
+
+    <div class="dg-cell dg-mono" style="color:var(--accent)">ExpertSDR3</div>
+    <div class="dg-cell dg-mono" style="color:var(--accent2)">Zeus</div>
+    <div class="dg-cell">OpenHPSDR Zeus</div>
+    <div class="dg-cell"><span class="dg-badge badge-full">Full</span> CWL/CWU ✓</div>
+
+    <div class="dg-cell dg-mono" style="color:var(--accent)">deskHPSDR</div>
+    <div class="dg-cell dg-mono" style="color:var(--fg2)">Hermes / …</div>
+    <div class="dg-cell">deskHPSDR</div>
+    <div class="dg-cell"><span class="dg-badge badge-excl">Exclusive IQ</span> CW alias</div>
+
+    <div class="dg-cell dg-mono" style="color:var(--accent)">Thetis</div>
+    <div class="dg-cell dg-mono" style="color:var(--fg2)">ANAN / Hermes</div>
+    <div class="dg-cell">Thetis</div>
+    <div class="dg-cell"><span class="dg-badge badge-stub">Stub audio/IQ</span></div>
+
+    <div class="dg-cell dg-mono" style="color:var(--accent)">NereusSDR</div>
+    <div class="dg-cell dg-mono" style="color:var(--fg2)">ANAN / SDR</div>
+    <div class="dg-cell">NereusSDR</div>
+    <div class="dg-cell"><span class="dg-badge badge-stub">Stub</span> use SETUP: flags</div>
+  </div>
+  </div>
+
+  <div style="margin-top:20px;" class="code-card">
+    <div class="code-card-header">
+      <div class="code-card-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+      <span>server-detect.js</span>
+    </div>
+    <pre><code class="language-javascript">function detectServer(initLines) {
+  const proto  = (initLines.find(l => l.startsWith('protocol:')) || '').split(':')[1]?.split(',')[0];
+  const device = (initLines.find(l => l.startsWith('device:'))   || '').split(':')[1]?.replace(';','');
+
+  return {
+    isExpertSDR3: proto === 'ExpertSDR3' && device !== 'Zeus',
+    isZeus:       proto === 'ExpertSDR3' && device === 'Zeus',
+    isDeskHPSDR:  proto === 'deskHPSDR',
+    isThetis:     proto === 'Thetis',
+    isNereusSDR:  proto === 'NereusSDR',
+    useAgcAutoEx: proto === 'ExpertSDR3' && device !== 'Zeus',
+    exclusiveIQ:  proto === 'deskHPSDR',
+    audioStubs:   proto === 'Thetis' || proto === 'NereusSDR',
+    noBroadcastPtt: proto === 'Thetis' || proto === 'NereusSDR',
+    cwAliased:    proto === 'deskHPSDR' || proto === 'Thetis',
+  };
+}</code></pre>
+  </div>
+</div>
+</div>
+
+<!-- SECTION 7: AGC VALUES -->
+<div id="agc" class="section">
+  <div class="section-eyebrow">§ 07 — AGC Reference</div>
+  <h2 class="section-title">AGC Mode Values by Implementation</h2>
+  <p class="section-desc">The most common source of inter-operability failures is the AGC command name and value format.</p>
+
+  <div style="overflow-x:auto;">
+  <table class="agc-table">
+    <thead>
+      <tr>
+        <th>Mode</th>
+        <th>Open-source: <code>agc_mode:0,0,NAME;</code></th>
+        <th>ExpertSDR3: <code>agc_auto_ex:0,0,…;</code></th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>FAST</td>
+        <td><code>FAST</code></td>
+        <td>attack=0.002, decay=0.500</td>
+        <td>Most commonly used for SSB</td>
+      </tr>
+      <tr>
+        <td>MEDIUM</td>
+        <td><code>MEDIUM</code> or <code>MED</code></td>
+        <td>attack=0.002, decay=1.200</td>
+        <td>NereusSDR → <code>NORMAL</code> alias maps here</td>
+      </tr>
+      <tr>
+        <td>SLOW</td>
+        <td><code>SLOW</code></td>
+        <td>attack=0.002, decay=3.000</td>
+        <td>For digital modes, slow signals</td>
+      </tr>
+      <tr>
+        <td>LONG</td>
+        <td><code>LONG</code></td>
+        <td>attack=0.002, decay=5.000</td>
+        <td>Slowest response, broadcast AM</td>
+      </tr>
+      <tr>
+        <td>FIXED</td>
+        <td><code>FIXED</code></td>
+        <td>gain=0 (manual RF gain)</td>
+        <td>Zeus: <code>OFF</code> maps to FIXED</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- SECTION 8: UNIVERSAL CLIENT RECIPE -->
+<div id="recipe" class="section-alt">
+<div class="section-inner">
+  <div class="section-eyebrow">§ 08 — Universal Client</div>
+  <h2 class="section-title">Recipe for a Universal TCI Client</h2>
+  <p class="section-desc">A client that handles all 5 deviations will work with every known TCI implementation.</p>
+
+  <div class="recipe-steps">
+    <div class="recipe-step">
+      <div class="recipe-n">1</div>
+      <div class="recipe-body">
+        <div class="recipe-title">Parse the init block before any command</div>
+        <div class="recipe-desc">Wait for <code>ready</code>. Build a server-capabilities object from <code>protocol:</code> and <code>device:</code> lines.</div>
+        <div class="recipe-code">ws.send(...) only after state.ready === true</div>
+      </div>
+    </div>
+    <div class="recipe-step">
+      <div class="recipe-n">2</div>
+      <div class="recipe-body">
+        <div class="recipe-title">Branch on AGC command</div>
+        <div class="recipe-desc">Use <code>agc_auto_ex</code> for ExpertSDR3 (when device ≠ Zeus), <code>agc_mode</code> for everything else.</div>
+        <div class="recipe-code">if (srv.isExpertSDR3) agc_auto_ex else agc_mode</div>
+      </div>
+    </div>
+    <div class="recipe-step">
+      <div class="recipe-n">3</div>
+      <div class="recipe-body">
+        <div class="recipe-title">Accept both CW alias forms</div>
+        <div class="recipe-desc">When parsing incoming <code>modulation:</code> events, normalize <code>CW</code> → <code>CWL</code> or <code>CWU</code> based on last-sent VFO offset. When sending, map <code>CWL</code>/<code>CWU</code> → <code>CW</code> for deskHPSDR.</div>
+        <div class="recipe-code">const m = (isDeskHPSDR &amp;&amp; isCW) ? 'CW' : mode;</div>
+      </div>
+    </div>
+    <div class="recipe-step">
+      <div class="recipe-n">4</div>
+      <div class="recipe-body">
+        <div class="recipe-title">Handle audio/IQ stubs gracefully</div>
+        <div class="recipe-desc">For Thetis, fall back to WAV/pipe audio. For NereusSDR, send <code>SETUP:TciAlwaysStreamIq=true;</code> before <code>iq_start</code>. Implement timeout detection: if no binary frame in 2s after <code>iq_start</code>, the server probably stubbed it.</div>
+        <div class="recipe-code">setTimeout(() => { if (!gotFrame) handleStub(); }, 2000);</div>
+      </div>
+    </div>
+    <div class="recipe-step">
+      <div class="recipe-n">5</div>
+      <div class="recipe-body">
+        <div class="recipe-title">Don't rely on PTT broadcast from other clients</div>
+        <div class="recipe-desc">Maintain own TX state. For deskHPSDR, be aware that your <code>iq_stop</code> will terminate IQ streams for all connected clients — call it only when intentional.</div>
+        <div class="recipe-code">// Track: myTxState = false; — never assume trx: event from others</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:28px;" class="code-card">
+    <div class="code-card-header">
+      <div class="code-card-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+      <span>universal-tci-client-skeleton.js</span>
+    </div>
+    <pre><code class="language-javascript">class UniversalTciClient {
+  constructor(url) {
+    this.ws = new WebSocket(url);
+    this.srv = {}; // server capabilities
+    this.ready = false;
+    this.initLines = [];
+    this.ws.onmessage = (e) => this.handleMessage(e);
+  }
+
+  handleMessage({ data }) {
+    if (data instanceof ArrayBuffer) {
+      this.parseFrame(data); return;
+    }
+    const line = data.trim();
+    if (!this.ready) {
+      this.initLines.push(line);
+      if (line === 'ready') {
+        this.srv = detectServer(this.initLines);
+        this.ready = true;
+        this.onReady();
+      }
+    } else {
+      this.parseCommand(line);
+    }
+  }
+
+  setAGC(trx, rx, mode)    { agcCommand(this.ws, this.srv, trx, rx, mode); }
+  setMode(trx, mode)        { modeCommand(this.ws, this.srv, trx, mode); }
+  startIQ(rx, rate = 48000) { iqStart(this.ws, this.srv, rx, rate); }
+  startAudio(rx)            { audioStart(this.ws, this.srv, rx); }
+  setPTT(trx, tx)           { this.ws.send(`trx:${trx},${tx};`); }
+  setVFO(trx, ch, freq)     { this.ws.send(`vfo:${trx},${ch},${freq};`); }
+}</code></pre>
+  </div>
+</div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div>
+    <strong style="color:var(--fg)">TCI Protocol Reference</strong>
+    &nbsp;·&nbsp; Analysis of 10 open-source implementations
+  </div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;">
+    <a href="https://github.com/pe5jw/tci-protocol-overview" target="_blank">GitHub Repository</a>
+    <a href="https://github.com/maksimus1210/TCI" target="_blank">TCI Specification</a>
+    <span style="color:var(--fg3)">pe5jw · 2026</span>
+  </div>
+</footer>
+
+<script>
+// Tab switching
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// Highlight.js
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('pre code').forEach(el => {
+    hljs.highlightElement(el);
+  });
+});
+</script>
